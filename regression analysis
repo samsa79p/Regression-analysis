@@ -1,0 +1,69 @@
+#read the data
+
+data2 <- read.table("corr_vrn1.txt", header=TRUE, sep = "\t")
+head(data2)
+
+D2<-data.frame(data2)
+head(D2)
+
+#arrange the data
+
+install.packages("ggscatter")
+library(tidyr)
+library(ggscatter)
+
+D10 <- d10 %>% gather(Rep, Expression, Rep1:Rep3)
+head(D10)
+
+library("ggplot2")
+
+model13<- lm(VRN1 ~ FT3, D2)
+summary(model13)
+
+D3<- D2$VRN1^2
+quad_2<-lm(log(FT3)~log(VRN1+D3), data = D2)
+summary(quad_2)
+
+anova(model12,quad_2)
+
+#normal linear regression
+ggplot(D2, aes(x=VRN1, y=FT3, color = Category))+ geom_point(size =6)+
+  stat_smooth(method = "lm", col = "red")+
+  theme_bw()+
+  ylab("relative fold change/refgenes(FT3)")+
+  xlab("relative fold change/refgenes(VRN1)")+
+  theme(axis.text=element_text(size=12, face = "bold"),
+        axis.title=element_text(size=14,face="bold"), plot.title = element_text(color="black", size=14, hjust = 0.5, face="bold"))+
+  labs(title = "CORRELATION ANALYSIS",
+       subtitle = paste("Adj R2 = ",signif(summary(model13)$adj.r.squared, 5),
+                        "Intercept =",signif(model13$coef[[1]],5 ),
+                        " Slope =",signif(model13$coef[[2]], 5),
+                        " P =",signif(summary(model13)$coef[2,4], 5))) 
+
+#quadratic regression
+
+ggplot(D2, aes(x=log(VRN1), y=log(FT3), color = Category))+ geom_point(size =4)+
+  stat_function(fun = function(x) x^2, color = "red", size = 1.2, type = "l", lty = 2)+
+  theme(axis.text=element_text(size=12, face = "bold"),
+        axis.title=element_text(size=14,face="bold"), plot.title = element_text(color="black", size=14, hjust = 0.5, face="bold", ))+
+  labs(title = "Correlation analysis",
+       subtitle = paste("Adj R2 = ",signif(summary(quad_2)$adj.r.squared, 5),
+                        "Intercept =",signif(quad_2$coef[[1]],5 ),
+                        " Slope =",signif(quad_2$coef[[2]], 5),
+                        " P =",signif(summary(quad_2)$coef[2,4], 5))) 
+
+ggplotRegression <- function (model) {
+  ggplot(model$model, aes_string(x = names(model$model)[2], y = names(model$model)[1])) + 
+    geom_point(size = 4) +
+    stat_smooth(method = "lm", col = "red") +
+    scale_colour_brewer(palette = "Set1") + 
+    theme(axis.text=element_text(size=12, face = "bold"),
+          axis.title=element_text(size=14,face="bold"), plot.title = element_text(color="black", size=14, hjust = 0.5, face="bold", ))+
+    labs(title = "TFL1~DT", subtitle = paste("Adj R2 = ",signif(summary(model)$adj.r.squared, 5),
+                                             "Intercept =",signif(model$coef[[1]],5 ),
+                                             " Slope =",signif(model$coef[[2]], 5),
+                                             " P =",signif(summary(model)$coef[2,4], 5)))
+}
+
+
+ggplotRegression(model)
